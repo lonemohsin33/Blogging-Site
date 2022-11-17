@@ -1,3 +1,4 @@
+const mongoose = require('mongoose')
 const authorModel = require("../models/authormodel")
 const blogModel = require("../models/blogmodel")
 
@@ -8,15 +9,9 @@ const createBlog = async (req, res) => {
 
     try {
         let blogData = req.body
-        let authorId = blogData.authorId
-
-        let checkId = await authorModel.findById(authorId)
-        if (!checkId) {
-            res.status(404).send({ status: false, message: "Author ID not exist !!" })
-        }
 
         let savedBlog = await blogModel.create(blogData)
-        res.status(201).send({ message: savedBlog })
+        res.status(201).send({ status: true, message: savedBlog })
     }
     catch (err) {
         res.status(500).send({ status: false, message: err.message })
@@ -33,10 +28,10 @@ const filterBlog = async (req, res) => {
         let filterData = await blogModel.find({ isDeleted: false, isPublished: true, ...queryParams })
 
         if (Object.keys(filterData).length == 0) {
-            return res.status(404).send({ msg: "No data matched !" })
+            return res.status(404).send({ status: false, message: "No data matched !" })
         }
         else {
-            res.send({ filtered_Blogs: filterData })
+            res.status(201).send({ status: true, filtered_Blogs: filterData })
         }
     }
     catch (err) {
@@ -50,22 +45,26 @@ const updateBlog = async (req, res) => {
 
     try {
         let Id = req.params.blogId
+
+        let valid = mongoose.isValidObjectId(Id)
+        if (valid == false) {
+            return res.status(400).send({ status: false, message: "Invalid Id !" })
+        }
+
+        let findBlogId = await blogModel.findOne({ _id: Id })
+        if (!findBlogId) return res.status(404).send({ message: "BlogId doesn't exist or incorrect !", status: false })
+
         let newData = req.body
-        let publish = newData.isPublished
-
-        if (publish == true) {
-
-            var updatedData = await blogModel.findOneAndUpdate({ isDeleted: false, _id: Id }, { $set: { title: newData.title, publishedAt: new Date() }, $push: { tags: newData.tags } }, { new: true })
+        if (Object.keys(newData).length == 0) {
+            return res.status(400).send({ message: "No data Present", status: false })
         }
-        else {
 
-            var updatedData = await blogModel.findOneAndUpdate({ isDeleted: false, _id: Id }, { $set: newData }, { new: true })
-        }
+        let updatedData = await blogModel.findOneAndUpdate({ isDeleted: false, _id: Id }, { $set: { title: newData.title, body: newData.body, category: newData.category }, $push: { tags: newData.tags, subcategory: newData.subcategory } }, { new: true })
 
         if (!updatedData) {
-            res.status(404).send({ msg: "Data not found !" })
+            return res.status(404).send({ status: false, message: "Data not found !" })
         }
-        res.status(200).send({ updated_blog: updatedData })
+        res.status(200).send({ status: true, updated_blog: updatedData })
     }
     catch (err) {
         res.status(500).send({ status: false, message: err.message })
@@ -78,13 +77,21 @@ const deleteById = async (req, res) => {
 
     try {
         let Id = req.params.blogId
-
-        let delData = await blogModel.findOneAndUpdate({ isDeleted: false, _id: Id }, { $set: { isDeleted: true } }, { new: true })
-
-        if (delData) {
-            res.send({ warning: "Data Deleted !!" })
+        let valid = mongoose.isValidObjectId(Id)
+        if (valid == false) {
+            return res.status(400).send({ status: false, message: "Invalid Id !" })
         }
-        res.status(404).send({ msg: "Data not found !" })
+
+
+        let findBlogId = await blogModel.findOne({ _id: Id })
+        if (!findBlogId) return res.status(404).send({ message: "BlogId doesn't exist or incorrect !", status: false })
+
+
+        let delData = await blogModel.findOneAndUpdate({ isDeleted: false, _id: Id }, { $set: { isDeleted: true, deletedAt: new Date() } }, { new: true })
+        if (delData) {
+            return res.status(201).send({ status: true, message: "Data Deleted !!" })
+        }
+        res.status(404).send({ status: false, message: "Data not found !" })
     }
     catch (err) {
         res.status(500).send({ status: false, message: err.message })
@@ -97,14 +104,22 @@ const deleteByQuery = async (req, res) => {
 
     try {
         let queryParams = req.query
+        if (!queryParams) return res.status(400).send({ message: "Author Id must be present !", status: false })
 
+        let authorId = queryParams.authorId
+        if (!authorId) return res.status(400).send({ message: "Author Id must be present !", status: false })
 
-        let delData = await blogModel.findOneAndUpdate({ isDeleted: false, ...queryParams }, { $set: { isDeleted: true } }, { new: true })
+        let valid = mongoose.isValidObjectId(authorId)
+        if (valid == false) return res.status(400).send({ status: false, message: "Invalid Id !" })
 
+        let findBlog = await blogModel.findOne({ authorId: authorId })
+        if (!findBlog) return res.status(404).send({ message: "BlogId doesn't exist or incorrect !", status: false })
+
+        let delData = await blogModel.findOneAndUpdate({ isDeleted: false, ...queryParams }, { $set: { isDeleted: true, deletedAt: new Date() } }, { new: true })
         if (!delData) {
-            return res.status(404).send({ msg: "No data matched !" })
+            return res.status(404).send({ message: "No data matched !" })
         }
-        res.send({ warning: "Data Deleted !!" })
+        res.status(200).send({ status: true, message: "Data Deleted !!" })
     }
     catch (err) {
         res.status(500).send({ status: false, message: err.message })

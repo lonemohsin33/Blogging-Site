@@ -5,45 +5,32 @@ const authorModel = require("../models/authormodel")
 
 // --------------------✅-------------------------
 
-const createAuthor = async function (req, res) {
+const createAuthor = async (req, res) => {
 
     try {
         let authorData = req.body
-        let emailId = req.body.email
 
-        let regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-
-        if (emailId.match(regex)) {
-
-            let savedData = await authorModel.create(authorData)
-            res.status(201).send({ message: savedData })
-        }
-        res.send({ warning: "Enter a valid email !" })
+        let savedData = await authorModel.create(authorData)
+        res.status(201).send({ message: savedData, status: true })
     }
     catch (err) {
-
-        if (err.name == "ValidationError") {
-            res.status(400).send({ warning: err.message })
-        }
-        else {
             res.status(500).send({ status: false, message: err.message })
-        }
     }
 }
 
 // --------------------✅-------------------------
 
-const loginAuthor = async function (req, res) {
+const loginAuthor = async (req, res) => {
 
     try {
         let userName = req.body.email
         let userPass = req.body.password
-    
+
         let user = await authorModel.findOne({ email: userName, password: userPass })
-    
+
         if (!user)
-            return res.send({ status: false, warning: "email-id or password is not correct !" })
-    
+            return res.status(404).send({ status: false, warning: "email-id or password is not matched or user doesn't exist !" })
+
         let token = jwt.sign(
             {
                 authorId: user._id,
@@ -52,11 +39,11 @@ const loginAuthor = async function (req, res) {
             },
             "fake password"
         )
-    
+
         res.setHeader("x-api-key", token)
-        res.send({ status: true, token: token })
+        res.status(200).send({ status: true, token: token })
     }
-    catch(err) {
+    catch (err) {
         res.status(500).send({ status: false, message: err.message })
     }
 }
