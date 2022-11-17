@@ -18,7 +18,7 @@ Repository for backend cohort - Lithium
 
 ### Author APIs /authors
 - Create an author - atleast 5 authors
-- Create a author document from request body.
+- Create a author document from request body
   `Endpoint: BASE_URL/authors`
 
 ### POST /blogs
