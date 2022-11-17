@@ -1,4 +1,4 @@
-// const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken')
 
 const authorModel = require("../models/authormodel")
 
@@ -26,10 +26,41 @@ const createAuthor = async function (req, res) {
             res.status(400).send({ warning: err.message })
         }
         else {
-            res.status(500).send({ warning: err.message })
+            res.status(500).send({ status: false, message: err.message })
         }
+    }
+}
+
+// --------------------✅-------------------------
+
+const loginAuthor = async function (req, res) {
+
+    try {
+        let userName = req.body.email
+        let userPass = req.body.password
+    
+        let user = await authorModel.findOne({ email: userName, password: userPass })
+    
+        if (!user)
+            return res.send({ status: false, warning: "email-id or password is not correct !" })
+    
+        let token = jwt.sign(
+            {
+                authorId: user._id,
+                email: userName,
+                password: userPass
+            },
+            "fake password"
+        )
+    
+        res.setHeader("x-api-key", token)
+        res.send({ status: true, token: token })
+    }
+    catch(err) {
+        res.status(500).send({ status: false, message: err.message })
     }
 }
 
 
 module.exports.createAuthor = createAuthor
+module.exports.loginAuthor = loginAuthor

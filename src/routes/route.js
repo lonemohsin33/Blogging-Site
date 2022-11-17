@@ -1,23 +1,25 @@
 const express = require('express')
 const router = express.Router()
 
-const authorController = require("../controllers/authorcontrol")
-const blogController = require("../controllers/blogcontrol")
-const Middleware = require("../middleware/logicware")
+const AuthorControl = require("../controllers/authorcontrol")
+const BlogControl = require("../controllers/blogcontrol")
+const AuthWare = require("../middleware/authware")
+const LogicWare = require("../middleware/logicware")
 
 
 router.get("/servertest", (req, res) => res.send("server working fine !"))
 
+router.post("/login",           LogicWare.clientBody, AuthorControl.loginAuthor)
 
-router.post("/authors",         Middleware.clientBody, authorController.createAuthor)
-router.post("/blogs",           Middleware.clientBody, blogController.createBlog)
+router.post("/authors",         LogicWare.clientBody, AuthorControl.createAuthor)
+router.post("/blogs",           AuthWare.authentication, LogicWare.clientBody, AuthWare.authorization, BlogControl.createBlog)
 
-router.get("/blogs",            blogController.filterBlog)
+router.get("/blogs",            AuthWare.authentication, BlogControl.filterBlog)
 
-router.put("/blogs/:blogId",    Middleware.clientBody, blogController.updateBlog)
+router.put("/blogs/:blogId",    AuthWare.authentication, AuthWare.authorization, LogicWare.clientBody, BlogControl.updateBlog)
 
-router.delete("/blogs/:blogId", blogController.deleteById)
-router.delete("/blogs",         blogController.deleteByQuery)
+router.delete("/blogs/:blogId", AuthWare.authentication, AuthWare.authorization, BlogControl.deleteById)
+router.delete("/blogs",         AuthWare.authentication, AuthWare.authorization, BlogControl.deleteByQuery)
 
 
 module.exports = router

@@ -1,12 +1,10 @@
-// const jwt = require('jsonwebtoken')
-
 const authorModel = require("../models/authormodel")
 const blogModel = require("../models/blogmodel")
 
 
 // -------------------✅--------------------------
 
-const createBlog = async function (req, res) {
+const createBlog = async (req, res) => {
 
     try {
         let blogData = req.body
@@ -14,33 +12,27 @@ const createBlog = async function (req, res) {
 
         let checkId = await authorModel.findById(authorId)
         if (!checkId) {
-            res.send({ warning: "Author ID not exist !!" })
+            res.status(404).send({ status: false, message: "Author ID not exist !!" })
         }
 
         let savedBlog = await blogModel.create(blogData)
         res.status(201).send({ message: savedBlog })
     }
     catch (err) {
-        if (err.name == "ValidationError") {
-            res.status(400).send({ warning: err.message })
-        }
-        else {
-
-            res.status(500).send({ warning: err.message })
-        }
+        res.status(500).send({ status: false, message: err.message })
     }
 }
 
-// --------------------⚠️-------------------------
+// --------------------✅-------------------------
 
-const filterBlog = async function (req, res) {
+const filterBlog = async (req, res) => {
 
     try {
         let queryParams = req.query
 
         let filterData = await blogModel.find({ isDeleted: false, isPublished: true, ...queryParams })
 
-        if (!filterData) {
+        if (Object.keys(filterData).length == 0) {
             return res.status(404).send({ msg: "No data matched !" })
         }
         else {
@@ -48,19 +40,27 @@ const filterBlog = async function (req, res) {
         }
     }
     catch (err) {
-        res.status(500).send(err)
+        res.status(500).send({ status: false, message: err.message })
     }
 }
 
 // ------------------✅---------------------------
 
-const updateBlog = async function (req, res) {
+const updateBlog = async (req, res) => {
 
     try {
         let Id = req.params.blogId
         let newData = req.body
+        let publish = newData.isPublished
 
-        let updatedData = await blogModel.findOneAndUpdate({ isDeleted: false, isPublished: true, _id: Id }, { $set: newData }, { new: true })
+        if (publish == true) {
+
+            var updatedData = await blogModel.findOneAndUpdate({ isDeleted: false, _id: Id }, { $set: { title: newData.title, publishedAt: new Date() }, $push: { tags: newData.tags } }, { new: true })
+        }
+        else {
+
+            var updatedData = await blogModel.findOneAndUpdate({ isDeleted: false, _id: Id }, { $set: newData }, { new: true })
+        }
 
         if (!updatedData) {
             res.status(404).send({ msg: "Data not found !" })
@@ -68,13 +68,13 @@ const updateBlog = async function (req, res) {
         res.status(200).send({ updated_blog: updatedData })
     }
     catch (err) {
-        res.status(500).send(err)
+        res.status(500).send({ status: false, message: err.message })
     }
 }
 
 // ------------------✅---------------------------
 
-const deleteById = async function (req, res) {
+const deleteById = async (req, res) => {
 
     try {
         let Id = req.params.blogId
@@ -87,16 +87,18 @@ const deleteById = async function (req, res) {
         res.status(404).send({ msg: "Data not found !" })
     }
     catch (err) {
-        res.status(500).send(err)
+        res.status(500).send({ status: false, message: err.message })
     }
 }
 
 // ------------------✅---------------------------
 
-const deleteByQuery = async function (req, res) {
+const deleteByQuery = async (req, res) => {
 
     try {
         let queryParams = req.query
+
+
         let delData = await blogModel.findOneAndUpdate({ isDeleted: false, ...queryParams }, { $set: { isDeleted: true } }, { new: true })
 
         if (!delData) {
@@ -105,7 +107,7 @@ const deleteByQuery = async function (req, res) {
         res.send({ warning: "Data Deleted !!" })
     }
     catch (err) {
-        res.status(500).send(err)
+        res.status(500).send({ status: false, message: err.message })
     }
 }
 
