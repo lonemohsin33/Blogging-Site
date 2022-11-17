@@ -23,8 +23,14 @@ const createAuthor = async (req, res) => {
 const loginAuthor = async (req, res) => {
 
     try {
+        let data = req.body
+        if (Object.keys(data).length == 0) {
+            return res.status(400).send({ message: "No data Present", status: false })
+        }
         let userName = req.body.email
+        if(!userName) return res.status(400).send({status:false, message:"Username is required"})
         let userPass = req.body.password
+        if(!userPass) return res.status(400).send({status:false, message:"Password is required"})
 
         let user = await authorModel.findOne({ email: userName, password: userPass })
 

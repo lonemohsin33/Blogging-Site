@@ -31,7 +31,7 @@ const filterBlog = async (req, res) => {
             return res.status(404).send({ status: false, message: "No data matched !" })
         }
         else {
-            res.status(201).send({ status: true, filtered_Blogs: filterData })
+            res.status(200).send({ status: true, filtered_Blogs: filterData })
         }
     }
     catch (err) {
@@ -115,7 +115,7 @@ const deleteByQuery = async (req, res) => {
         let findBlog = await blogModel.findOne({ authorId: authorId })
         if (!findBlog) return res.status(404).send({ message: "BlogId doesn't exist or incorrect !", status: false })
 
-        let delData = await blogModel.findOneAndUpdate({ isDeleted: false, ...queryParams }, { $set: { isDeleted: true, deletedAt: new Date() } }, { new: true })
+        let delData = await blogModel.updateMany({ isDeleted: false, ...queryParams }, { $set: { isDeleted: true, deletedAt: new Date() } }, { new: true })
         if (!delData) {
             return res.status(404).send({ message: "No data matched !" })
         }
