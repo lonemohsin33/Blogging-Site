@@ -16,7 +16,7 @@ router.post("/blogs",           AuthWare.authentication, Validation.validBlog, V
 
 router.get("/blogs",            AuthWare.authentication, BlogControl.filterBlog)
 
-router.put("/blogs/:blogId",    AuthWare.authentication, AuthWare.authorization, Validation.isPubChecker, BlogControl.updateBlog)
+router.put("/blogs/:blogId",    AuthWare.authentication, AuthWare.authorization,  BlogControl.updateBlog)
 
 router.delete("/blogs/:blogId", AuthWare.authentication, AuthWare.authorization, BlogControl.deleteById)
 router.delete("/blogs",         AuthWare.authentication, AuthWare.authorization, BlogControl.deleteByQuery)

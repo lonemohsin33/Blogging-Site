@@ -24,6 +24,9 @@ const filterBlog = async (req, res) => {
 
     try {
         let queryParams = req.query
+        if (queryParams.isDeleted == true) {
+            return res.status(400).send({ status: false, message: "Can not get deleted data !" })
+        }
 
         let filterData = await blogModel.find({ isDeleted: false, isPublished: true, ...queryParams })
 
@@ -46,20 +49,33 @@ const updateBlog = async (req, res) => {
     try {
         let Id = req.params.blogId
 
+        
         let valid = mongoose.isValidObjectId(Id)
         if (valid == false) {
             return res.status(400).send({ status: false, message: "Invalid Id !" })
         }
-
+        
         let findBlogId = await blogModel.findOne({ _id: Id })
         if (!findBlogId) return res.status(404).send({ message: "BlogId doesn't exist or incorrect !", status: false })
-
+        
         let newData = req.body
         if (Object.keys(newData).length == 0) {
             return res.status(400).send({ message: "No data Present", status: false })
         }
 
-        let updatedData = await blogModel.findOneAndUpdate({ isDeleted: false, _id: Id }, { $set: { title: newData.title, body: newData.body, category: newData.category }, $push: { tags: newData.tags, subcategory: newData.subcategory } }, { new: true })
+        if (newData.isPublished == true) {
+
+            var updatedData = await blogModel.findOneAndUpdate({ isDeleted: false, _id: Id }, { $set: { title: newData.title, body: newData.body, category: newData.category, isPublished: true, publishedAt: newData.publishedAt = new Date() }, $push: { tags: newData.tags, subcategory: newData.subcategory } }, { new: true })
+        }
+        else if (newData.isPublished == false) {
+
+            var updatedData = await blogModel.findOneAndUpdate({ isDeleted: false, _id: Id }, { $set: { title: newData.title, body: newData.body, category: newData.category, isPublished: false, publishedAt: null }, $push: { tags: newData.tags, subcategory: newData.subcategory } }, { new: true })
+        }
+        else {
+
+            var updatedData = await blogModel.findOneAndUpdate({ isDeleted: false, _id: Id }, { $set: { title: newData.title, body: newData.body, category: newData.category }, $push: { tags: newData.tags, subcategory: newData.subcategory } }, { new: true })
+        }
+
 
         if (!updatedData) {
             return res.status(404).send({ status: false, message: "Data not found !" })
